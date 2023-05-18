@@ -1,0 +1,8 @@
+- Cloud build
+- Google run backend
+- MongoDB
+- Storage bucket for mp3s
+    - Trigger
+- Storage bucket for front end
+- CDN for storage bucket?
+
