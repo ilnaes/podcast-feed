@@ -44,16 +44,16 @@ resource "google_project_service" "run_api" {
 }
 
 # next two enable cloud build to deploy to run 
-resource "google_project_iam_member" "run_admin_binding" {
-  project = var.gcp_project_id
-  role    = "roles/run.admin"
-  member  = "serviceAccount:${var.gcp_project_no}@cloudbuild.gserviceaccount.com"
-}
-resource "google_project_iam_member" "iam_user_binding" {
-  project = var.gcp_project_id
-  role    = "roles/iam.serviceAccountUser"
-  member  = "serviceAccount:${var.gcp_project_no}@cloudbuild.gserviceaccount.com"
-}
+# resource "google_project_iam_member" "run_admin_binding" {
+#   project = var.gcp_project_id
+#   role    = "roles/run.admin"
+#   member  = "serviceAccount:${var.gcp_project_no}@cloudbuild.gserviceaccount.com"
+# }
+# resource "google_project_iam_member" "iam_user_binding" {
+#   project = var.gcp_project_id
+#   role    = "roles/iam.serviceAccountUser"
+#   member  = "serviceAccount:${var.gcp_project_no}@cloudbuild.gserviceaccount.com"
+# }
 
 resource "google_storage_bucket" "build_staging" {
   name          = "staging_bucket_${random_string.bucket-post.result}"
@@ -71,6 +71,22 @@ resource "google_artifact_registry_repository" "images-repo" {
   depends_on = [
     google_project_service.artifact-registry
   ]
+}
+
+resource "google_cloudbuild_trigger" "filename-trigger" {
+  location = "us-central1"
+
+  trigger_template {
+    branch_name = "main"
+    repo_name   = "api"
+  }
+
+  # substitutions = {
+  #   _FOO = "bar"
+  #   _BAZ = "qux"
+  # }
+
+  filename = "cloudbuild.yaml"
 }
 
 resource "local_file" "staging" {
