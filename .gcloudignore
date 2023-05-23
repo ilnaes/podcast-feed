@@ -1,0 +1,6 @@
+.git
+.gcloudignore
+.gitignore
+node_modules
+*.tf
+.terraform
