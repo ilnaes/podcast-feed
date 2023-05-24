@@ -73,28 +73,12 @@ resource "google_artifact_registry_repository" "images-repo" {
   ]
 }
 
-resource "google_cloudbuild_trigger" "filename-trigger" {
-  location = "us-central1"
-
-  trigger_template {
-    branch_name = "main"
-    repo_name   = "api"
+resource "null_resource" "build" {
+  provisioner "local-exec" {
+    command = "gcloud builds submit . --gcs-source-staging-dir=${google_storage_bucket.build_staging.url}/source"
   }
 
-  # substitutions = {
-  #   _FOO = "bar"
-  #   _BAZ = "qux"
-  # }
-
-  filename = "cloudbuild.yaml"
-}
-
-resource "local_file" "staging" {
-  content = google_storage_bucket.build_staging.url
-  filename = ".staging"
-}
-
-# Display the service URL
-output "staging_bucket" {
-  value = google_storage_bucket.build_staging.url
+  depends_on = [
+    google_artifact_registry_repository.images-repo
+  ]
 }

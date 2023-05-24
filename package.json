@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node .",
-    "deploy": "gcloud builds submit . --gcs-source-staging-dir=$(<.staging)/source",
+    "deploy": "terraform apply -replace=\"null_resource.build\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
