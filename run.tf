@@ -21,7 +21,7 @@ resource "google_cloud_run_service" "run_service" {
 
 
   # Waits for the Cloud Run API to be enabled
-  depends_on = [google_project_service.run_api, null_resource.build]
+  depends_on = [google_project_service.enable_apis, null_resource.build]
 }
 
 # Allow unauthenticated users to invoke the service
@@ -30,9 +30,7 @@ resource "google_cloud_run_service_iam_member" "run_all_users" {
   location = google_cloud_run_service.run_service.location
   role     = "roles/run.invoker"
   member   = "allUsers"
-  depends_on = [google_cloud_run_service.run_service]
-}
-
-output "api_url" {
-  value = google_cloud_run_service.run_service.status[0].url
+  lifecycle {
+    replace_triggered_by = [google_cloud_run_service.run_service]
+  }
 }

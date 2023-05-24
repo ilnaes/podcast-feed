@@ -43,8 +43,3 @@ locals {
     "://${var.db_username}:${mongodbatlas_database_user.user.password}@"
   )
 }
-
-output "atlas_uri" {
-  value = local.atlas_uri
-  sensitive = true
-}

@@ -16,6 +16,7 @@ resource "random_string" "bucket-post" {
   length  = 8
   special = false
   upper   = false
+  count = 2
 }
 
 provider "google" {
@@ -25,23 +26,13 @@ provider "google" {
   zone        = "us-central1-c"
 }
 
-resource "google_project_service" "cloud-build" {
-  service = "cloudbuild.googleapis.com"
-
+resource "google_project_service" "enable_apis" {
+  for_each = toset(["cloudbuild", "artifactregistry", "run"])
+  
+  service = "${each.key}.googleapis.com"
   disable_dependent_services = true
 }
 
-resource "google_project_service" "artifact-registry" {
-  service = "artifactregistry.googleapis.com"
-
-  disable_dependent_services = true
-}
-
-resource "google_project_service" "run_api" {
-  service = "run.googleapis.com"
-
-  disable_dependent_services = true
-}
 
 # next two enable cloud build to deploy to run 
 # resource "google_project_iam_member" "run_admin_binding" {
@@ -56,12 +47,30 @@ resource "google_project_service" "run_api" {
 # }
 
 resource "google_storage_bucket" "build_staging" {
-  name          = "staging_bucket_${random_string.bucket-post.result}"
+  name          = "staging_bucket_${random_string.bucket-post[0].result}"
   location      = var.gcp_region
   force_destroy = true
 
   public_access_prevention = "enforced"
 }
+
+resource "google_storage_bucket" "feed_bucket" {
+  name          = "feed_bucket_${random_string.bucket-post[1].result}"
+  location      = var.gcp_region
+  force_destroy = true
+  public_access_prevention = "inherited"
+}
+
+resource "google_storage_bucket_iam_member" "member" {
+  bucket = google_storage_bucket.feed_bucket.name
+  role = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+# resource "google_storage_bucket_access_control" "public_rule" {
+#   bucket = google_storage_bucket.feed_bucket.name
+#   role   = "READER"
+#   entity = "allUsers"
+# }
 
 resource "google_artifact_registry_repository" "images-repo" {
   location      = var.gcp_region
@@ -69,7 +78,7 @@ resource "google_artifact_registry_repository" "images-repo" {
   description   = "Docker repo"
   format        = "DOCKER"
   depends_on = [
-    google_project_service.artifact-registry
+    google_project_service.enable_apis
   ]
 }
 
@@ -79,6 +88,6 @@ resource "null_resource" "build" {
   }
 
   depends_on = [
-    google_artifact_registry_repository.images-repo
+    google_artifact_registry_repository.images-repo, local_file.env
   ]
 }

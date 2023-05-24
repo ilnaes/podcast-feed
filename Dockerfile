@@ -4,8 +4,7 @@ WORKDIR /app
 COPY package.json ./
 
 RUN npm i
-# COPY key.json ./
-# ENV GOOGLE_APPLICATION_CREDENTIALS="/app/key.json"
+COPY key.json .env ./
 
 COPY ./src ./src
 
