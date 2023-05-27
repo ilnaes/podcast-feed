@@ -1,6 +1,7 @@
 import { mongoConnect, getDB, disconnect } from "../db";
 import request from "supertest";
 import feeds from "./feeds";
+import { build_auth_get, build_auth_put } from "../utils";
 import { describe, expect, test, beforeAll, afterAll } from "@jest/globals";
 import { _login, setup_auth } from "../auth";
 
@@ -8,14 +9,19 @@ describe("Feeds", () => {
   let token1: string;
   let token2: string;
   let app: Express.Application;
+  let get: (user: string) => request.Test;
+  let put: (user: string) => request.Test;
 
   beforeAll(async () => {
     await new Promise((res, rej) => {
       mongoConnect(
         () => {
           setup_auth();
-          res("good");
           app = feeds();
+          get = build_auth_get("/feeds", app);
+          put = build_auth_put("/feeds", app);
+
+          res("good");
         },
         (err) => rej(err)
       );
@@ -34,11 +40,7 @@ describe("Feeds", () => {
   });
 
   test("Should return empty feed", (done) => {
-    request(app)
-      .get("/feeds")
-      .set("Authorization", `Bearer ${token1}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
-      .set("Accept", "application/json")
+    get(token1)
       .expect("Content-Type", /json/)
       .expect(200)
       .end((err, res) => {
@@ -50,10 +52,7 @@ describe("Feeds", () => {
   });
 
   test("Should succeed", (done) => {
-    request(app)
-      .put("/feeds")
-      .set("Authorization", `Bearer ${token1}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
+    put(token1)
       .send({
         name: "pqioweh",
         description: "QOWieqoiwbeq",
@@ -63,12 +62,7 @@ describe("Feeds", () => {
   });
 
   test("Should have one result", (done) => {
-    request(app)
-      .get("/feeds")
-      .set("Authorization", `Bearer ${token1}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
-      .set("Accept", "application/json")
-      .expect("Content-Type", /json/)
+    get(token1)
       .expect(200)
       .end((err, res) => {
         if (err) return done(err);
@@ -84,46 +78,16 @@ describe("Feeds", () => {
   });
 
   test("Should succeed", (done) => {
-    request(app)
-      .put("/feeds")
-      .set("Authorization", `Bearer ${token2}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
+    put(token2)
       .send({
         name: "qwioeqwe",
       })
       .set("Content-Type", "application/json")
-      .expect(200)
-      .end((err, _res) => {
-        if (err) return done(err);
-        return done();
-      });
+      .expect(200, done);
   });
 
-  test("Shouldn't have affected results", (done) => {
-    request(app)
-      .get("/feeds")
-      .set("Authorization", `Bearer ${token1}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
-      .set("Accept", "application/json")
-      .expect("Content-Type", /json/)
-      .expect(200)
-      .end((err, res) => {
-        if (err) return done(err);
-
-        expect(Array.isArray(res.body)).toBe(true);
-        expect(res.body.length).toBe(1);
-        expect(res.body[0].user).toBe("test1");
-        expect(res.body[0].name).toBe("pqioweh");
-
-        return done();
-      });
-  });
-
-  test("Double insert should fail", (done) => {
-    request(app)
-      .put("/feeds")
-      .set("Authorization", `Bearer ${token1}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
+  test("Double insert with different description should fail", (done) => {
+    put(token1)
       .send({
         name: "pqioweh",
         description: "qiwoneowiq",
@@ -133,14 +97,27 @@ describe("Feeds", () => {
   });
 
   test("Invalid format insert should fail", (done) => {
-    request(app)
-      .put("/feeds")
-      .set("Authorization", `Bearer ${token1}`) //set header for this test
-      .set("Content-Type", "application/json") //set header for this test
+    put(token1)
       .send({
         what: "qwbeq",
       })
       .set("Content-Type", "application/json")
       .expect(400, done);
+  });
+
+  test("Shouldn't have affected results", (done) => {
+    get(token1)
+      .expect(200)
+      .end((err, res) => {
+        if (err) return done(err);
+
+        expect(Array.isArray(res.body)).toBe(true);
+        expect(res.body.length).toBe(1);
+        expect(res.body[0].user).toBe("test1");
+        expect(res.body[0].name).toBe("pqioweh");
+        expect(res.body[0].description).toBe("QOWieqoiwbeq");
+
+        return done();
+      });
   });
 });

@@ -21,6 +21,9 @@ test("invalid episodes", () => {
   expect(
     clean_feed("qoehq", { name: "qoweh", episodes: ["qsdnqw", 1] })
   ).toBeNull();
+  expect(
+    clean_feed("qoehq", { name: "qoweh", episodes: { id: 1 } })
+  ).toBeNull();
 });
 
 test("valid", () => {

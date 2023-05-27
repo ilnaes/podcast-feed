@@ -1,3 +1,5 @@
+import request from "supertest";
+
 interface Episode {
   user: string;
   name: string;
@@ -11,6 +13,25 @@ interface Feed {
   name: string;
   description?: string;
   episodes?: string[];
+}
+
+export function build_auth_get(route: string, app: Express.Application) {
+  return (user: string) => {
+    return request(app)
+      .get(route)
+      .set("Authorization", `Bearer ${user}`) //set header for this test
+      .set("Content-Type", "application/json") //set header for this test
+      .set("Accept", "application/json");
+  };
+}
+
+export function build_auth_put(route: string, app: Express.Application) {
+  return (user: string) => {
+    return request(app)
+      .put(route)
+      .set("Authorization", `Bearer ${user}`) //set header for this test
+      .set("Content-Type", "application/json"); //set header for this test
+  };
 }
 
 export function clean_feed(

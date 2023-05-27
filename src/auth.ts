@@ -19,12 +19,8 @@ export function setup_auth() {
         jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       },
       async (token, done) => {
-        try {
-          // possibly check if user is still present in db
-          return done(null, token.user);
-        } catch (error) {
-          done(error);
-        }
+        // possibly check if user is still present in db
+        return done(null, token.user);
       }
     )
   );
