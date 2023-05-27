@@ -81,6 +81,6 @@ export function setup_auth() {
   );
 }
 
-export function _login(): string {
-  return jwt.sign({ user: { _id: "test" } }, JWT_SECRET);
+export function _login(_id = "test"): string {
+  return jwt.sign({ user: { _id } }, JWT_SECRET);
 }

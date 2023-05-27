@@ -37,6 +37,12 @@ export function clean_feed(
     return res;
   }
 
+  if ("description" in json) {
+    if (typeof json["description"] !== "string") return null;
+
+    res["description"] = json["description"];
+  }
+
   let eps: string[] = [];
 
   if ("episodes" in json) {
