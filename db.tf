@@ -31,6 +31,11 @@ resource "mongodbatlas_database_user" "user" {
     role_name     = "readWrite"
     database_name = var.atlas_db_name
   }
+
+  roles {
+    role_name     = "readWrite"
+    database_name = "test"
+  }
 }
 
 locals {

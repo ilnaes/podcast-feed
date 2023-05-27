@@ -12,7 +12,7 @@ output "feed_bucket" {
 }
 
 resource "local_file" "env" {
-  content = "GOOGLE_APPLICATION_CREDENTIALS=\"key.json\"\nMONGO_URI=\"${local.atlas_uri}\"\nFEED_BUCKET=\"${google_storage_bucket.feed_bucket.url}\""
+  content = "GOOGLE_APPLICATION_CREDENTIALS=\"key.json\"\nMONGO_URI=\"${local.atlas_uri}\"\nFEED_BUCKET=\"${google_storage_bucket.feed_bucket.url}\"\nJWT_SECRET=\"${random_string.jwt_secret.result}\""
   filename = ".env"
   file_permission = "0666"
 }

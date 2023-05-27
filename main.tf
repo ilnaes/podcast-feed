@@ -5,7 +5,6 @@ terraform {
     mongodbatlas = {
       source = "mongodb/mongodbatlas"
     }
-    # Cloud Run support was added on 3.3.0
     google = {
       source = "hashicorp/google"
     }
@@ -19,8 +18,13 @@ resource "random_string" "bucket-post" {
   count = 2
 }
 
+resource "random_string" "jwt_secret" {
+  length = 32
+  special = true
+  upper = true
+}
+
 provider "google" {
-  # Replace `PROJECT_ID` with your project
   project = var.gcp_project_id
   region      = var.gcp_region
   zone        = "us-central1-c"
@@ -32,7 +36,6 @@ resource "google_project_service" "enable_apis" {
   service = "${each.key}.googleapis.com"
   disable_dependent_services = true
 }
-
 
 # next two enable cloud build to deploy to run 
 # resource "google_project_iam_member" "run_admin_binding" {
@@ -54,24 +57,6 @@ resource "google_storage_bucket" "build_staging" {
   public_access_prevention = "enforced"
 }
 
-resource "google_storage_bucket" "feed_bucket" {
-  name          = "feed_bucket_${random_string.bucket-post[1].result}"
-  location      = var.gcp_region
-  force_destroy = true
-  public_access_prevention = "inherited"
-}
-
-resource "google_storage_bucket_iam_member" "member" {
-  bucket = google_storage_bucket.feed_bucket.name
-  role = "roles/storage.objectViewer"
-  member = "allUsers"
-}
-# resource "google_storage_bucket_access_control" "public_rule" {
-#   bucket = google_storage_bucket.feed_bucket.name
-#   role   = "READER"
-#   entity = "allUsers"
-# }
-
 resource "google_artifact_registry_repository" "images-repo" {
   location      = var.gcp_region
   repository_id = "images"
@@ -90,4 +75,17 @@ resource "null_resource" "build" {
   depends_on = [
     google_artifact_registry_repository.images-repo, local_file.env
   ]
+}
+
+resource "google_storage_bucket" "feed_bucket" {
+  name          = "feed_bucket_${random_string.bucket-post[1].result}"
+  location      = var.gcp_region
+  force_destroy = true
+  public_access_prevention = "inherited"
+}
+
+resource "google_storage_bucket_iam_member" "public_read" {
+  bucket = google_storage_bucket.feed_bucket.name
+  role = "roles/storage.objectViewer"
+  member = "allUsers"
 }
